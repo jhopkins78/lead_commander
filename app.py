@@ -16,6 +16,13 @@ import requests
 import pandas as pd
 import io
 
+# Set Streamlit page config
+st.set_page_config(
+    page_title="Lead Commander",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
 # --- Simple Login System ---
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
@@ -41,13 +48,6 @@ else:
     if st.sidebar.button("Logout"):
         st.session_state["authenticated"] = False
         st.experimental_rerun()
-
-# Set Streamlit page config
-st.set_page_config(
-    page_title="Lead Commander",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
 
 if st.session_state.get("authenticated", False):
 
