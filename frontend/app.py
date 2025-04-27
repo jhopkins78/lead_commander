@@ -17,7 +17,8 @@ import pandas as pd
 import io
 
 # Set your backend base URL here (update as needed)
-API_BASE_URL = "http://localhost:8000/leads"
+API_BASE_URL = "https://lead-commander.onrender.com/leads"
+BACKEND_URL = "https://lead-commander.onrender.com"
 
 # Set Streamlit page config
 st.set_page_config(
