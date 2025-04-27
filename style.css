@@ -1,0 +1,222 @@
+/* Lead Commander Landing Page Styles */
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  background: #f9fafb;
+  color: #111827;
+  min-height: 100vh;
+}
+
+.hero {
+  text-align: center;
+  padding: 3rem 1rem 2rem 1rem;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(17,24,39,0.03);
+}
+
+.hero h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  letter-spacing: -1px;
+}
+
+.subheadline {
+  font-size: 1.25rem;
+  color: #374151;
+  margin-bottom: 2rem;
+}
+
+.cta-button {
+  display: inline-block;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+  padding: 0.85em 2em;
+  border-radius: 0.5em;
+  text-decoration: none;
+  font-size: 1.1rem;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.08);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.cta-button:hover, .cta-button:focus {
+  background: #1d4ed8;
+  box-shadow: 0 4px 16px rgba(37,99,235,0.15);
+}
+
+.features {
+  max-width: 600px;
+  margin: 2.5rem auto 2rem auto;
+  background: #fff;
+  border-radius: 1em;
+  box-shadow: 0 2px 8px rgba(17,24,39,0.04);
+  padding: 2rem 1.5rem;
+}
+
+.features h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.2rem;
+  color: #2563eb;
+  text-align: center;
+}
+
+.features ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.features li {
+  font-size: 1.1rem;
+  margin: 0.7em 0;
+  padding-left: 1.2em;
+  position: relative;
+}
+
+.features li span:before {
+  content: "✓";
+  color: #22c55e;
+  font-weight: bold;
+  position: absolute;
+  left: 0;
+}
+
+.beta-note {
+  background: #e0e7ff;
+  color: #1e293b;
+  font-size: 1.05rem;
+  border-radius: 0.5em;
+  padding: 0.7em 1em;
+  margin: 1.2em auto 0.5em auto;
+  max-width: 500px;
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(37,99,235,0.06);
+}
+.founders-note {
+  color: #374151;
+  font-size: 0.98rem;
+  text-align: center;
+  margin-bottom: 1.5em;
+}
+
+/* --- PRICING TABLE (future use) ---
+.pricing {
+  max-width: 900px;
+  margin: 3rem auto 2rem auto;
+  padding: 2rem 1rem;
+  background: #fff;
+  border-radius: 1em;
+  box-shadow: 0 2px 8px rgba(17,24,39,0.04);
+}
+.pricing h2 {
+  text-align: center;
+  color: #2563eb;
+  font-size: 1.7rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+}
+.pricing-table {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.plan {
+  background: #f3f4f6;
+  border-radius: 0.8em;
+  box-shadow: 0 1px 4px rgba(17,24,39,0.06);
+  padding: 2rem 1.5rem 1.5rem 1.5rem;
+  flex: 1 1 220px;
+  min-width: 220px;
+  max-width: 300px;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  border: 2px solid transparent;
+  transition: border 0.2s;
+}
+.plan.featured {
+  border: 2px solid #2563eb;
+  background: #e0e7ff;
+}
+.plan h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 0.5em;
+}
+.price {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #2563eb;
+  margin-bottom: 0.7em;
+}
+.price span {
+  font-size: 1rem;
+  color: #374151;
+  font-weight: 400;
+}
+.plan ul {
+  list-style: none;
+  padding: 0;
+  margin: 1em 0 1.5em 0;
+  text-align: left;
+}
+.plan ul li {
+  font-size: 1rem;
+  margin: 0.5em 0;
+  padding-left: 1.2em;
+  position: relative;
+}
+.plan ul li:before {
+  content: "•";
+  color: #2563eb;
+  font-weight: bold;
+  position: absolute;
+  left: 0;
+}
+.plan button {
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  border-radius: 0.4em;
+  padding: 0.7em 1.5em;
+  font-size: 1rem;
+  cursor: not-allowed;
+  opacity: 0.7;
+  margin-top: 0.5em;
+}
+@media (max-width: 900px) {
+  .pricing-table {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+--- END PRICING TABLE --- */
+
+footer {
+  text-align: center;
+  color: #6b7280;
+  font-size: 1rem;
+  padding: 2rem 0 1rem 0;
+  background: none;
+  margin-top: 2rem;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .hero h1 {
+    font-size: 1.6rem;
+  }
+  .features {
+    padding: 1.2rem 0.5rem;
+  }
+  .features h2 {
+    font-size: 1.1rem;
+  }
+  .cta-button {
+    font-size: 1rem;
+    padding: 0.7em 1.2em;
+  }
+}

@@ -1,0 +1,17 @@
+# Lead Commander - Combined Requirements
+# Backend (Flask API) and Frontend (Streamlit Dashboard)
+# Install with: pip install -r requirements.txt
+
+# Backend
+flask
+gunicorn
+python-dotenv
+
+# Frontend
+streamlit
+
+# Shared
+requests
+pandas
+
+# (Add any additional packages below as needed)

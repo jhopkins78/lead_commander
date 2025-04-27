@@ -1,0 +1,10 @@
+# Ignore Python environment files
+venv/
+__pycache__/
+*.pyc
+
+# Ignore system files
+.DS_Store
+
+# Ignore secrets
+.env
