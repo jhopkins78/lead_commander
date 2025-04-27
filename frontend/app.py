@@ -16,6 +16,9 @@ import requests
 import pandas as pd
 import io
 
+# Set your backend base URL here (update as needed)
+API_BASE_URL = "http://localhost:8000/leads"
+
 # Set Streamlit page config
 st.set_page_config(
     page_title="Lead Commander",
@@ -23,9 +26,20 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- Simple Login System ---
+# --- Session State Initialization ---
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
+if "uploaded_leads" not in st.session_state:
+    st.session_state["uploaded_leads"] = None
+if "filters" not in st.session_state:
+    st.session_state["filters"] = {
+        "score": (0, 100),
+        "win_probability": (0, 100),
+        "market_signal_only": False,
+        "recommended_actions": [],
+    }
+
+# --- Simple Login System ---
 
 def login_form():
     st.title("Lead Commander Login")
@@ -58,32 +72,12 @@ if st.session_state.get("authenticated", False):
         unsafe_allow_html=True
     )
     dark_mode = st.sidebar.checkbox("Dark Mode", value=False)
-    menu = st.sidebar.selectbox(
-        "Navigate",
-        [
-            "Upload Leads",
-            "View Leads",
-            "Optimize Pipeline",
-            "Automate Actions",
-            "Coaching Tips"
-        ]
-    )
 
     # Welcome message at the top of the dashboard
     st.markdown("**Welcome to Lead Commander — Your AI-Driven Lead Optimization Hub**")
     st.markdown("")
     st.markdown("---")
 
-    # Initialize session state for uploaded leads and filters
-    if "uploaded_leads" not in st.session_state:
-        st.session_state["uploaded_leads"] = None
-    if "filters" not in st.session_state:
-        st.session_state["filters"] = {
-            "score": (0, 100),
-            "win_probability": (0, 100),
-            "market_signal_only": False,
-            "recommended_actions": [],
-        }
 
     # Dynamic CSS for light/dark mode and executive styling
     def inject_css(dark_mode: bool):
@@ -133,8 +127,6 @@ if st.session_state.get("authenticated", False):
 
     inject_css(dark_mode)
 
-    # Set your backend base URL here (update as needed)
-    API_BASE_URL = "http://localhost:8000/leads"
 
 def call_api(endpoint: str, method="GET", payload=None):
     """
@@ -240,6 +232,12 @@ def apply_filters(df: pd.DataFrame):
     return df
 
 st.title("Lead Commander Dashboard")
+
+# Sidebar navigation menu (inserted after login and dashboard title)
+menu = st.sidebar.selectbox(
+    "Navigation",
+    ["Upload Leads", "View Leads", "Optimize Pipeline", "Automate Actions", "Coaching Tips"]
+)
 
 if menu == "Upload Leads":
     section_header("Upload Leads")
