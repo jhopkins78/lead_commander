@@ -1,5 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+import pandas as pd
+import io
 
 app = Flask(__name__)
 CORS(app)
@@ -51,6 +53,67 @@ def get_leads():
 @app.route('/optimize_pipeline', methods=['POST'])
 def optimize_pipeline():
     return jsonify({"message": "Pipeline optimized successfully"})
+
+@app.route('/optimize', methods=['POST'])
+def optimize():
+    # Accept JSON (list of leads) or CSV file upload
+    if request.content_type and "application/json" in request.content_type:
+        leads = request.get_json()
+        df = pd.DataFrame(leads)
+    elif request.content_type and "multipart/form-data" in request.content_type:
+        if "file" not in request.files:
+            return jsonify({"error": "No file uploaded"}), 400
+        file = request.files["file"]
+        df = pd.read_csv(file)
+    else:
+        return jsonify({"error": "Unsupported content type"}), 400
+
+    # Scoring rules
+    def score_lead(row):
+        score = 0
+        # Field: Lead Source
+        if row.get("Lead Source") == "Organic Search":
+            score += 20
+        if row.get("Lead Source") == "Direct Traffic":
+            score += 15
+        if row.get("Lead Source") == "Olark Chat":
+            score += 10
+        # Field: TotalVisits
+        try:
+            if float(row.get("TotalVisits", 0)) > 3:
+                score += 10
+        except Exception:
+            pass
+        # Field: Total Time Spent on Website
+        try:
+            if float(row.get("Total Time Spent on Website", 0)) > 300:
+                score += 15
+        except Exception:
+            pass
+        # Field: Lead Profile
+        if row.get("Lead Profile") == "Potential Lead":
+            score += 25
+        # Field: Asymmetrique Activity Score
+        try:
+            if float(row.get("Asymmetrique Activity Score", 0)) > 15:
+                score += 10
+        except Exception:
+            pass
+        # Field: Asymmetrique Profile Score
+        try:
+            if float(row.get("Asymmetrique Profile Score", 0)) > 15:
+                score += 10
+        except Exception:
+            pass
+        # Field: Last Notable Activity
+        if row.get("Last Notable Activity") == "Email Opened":
+            score += 15
+        return score
+
+    df["Score"] = df.apply(score_lead, axis=1)
+    # Return as JSON, sorted by Score descending
+    result = df.sort_values("Score", ascending=False).to_dict(orient="records")
+    return jsonify(result)
 
 @app.route('/automate_actions', methods=['POST'])
 def automate_actions():

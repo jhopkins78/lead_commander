@@ -43,6 +43,13 @@ if "filters" not in st.session_state:
 # --- Simple Login System ---
 
 def login_form():
+    st.markdown(
+        """
+        <div style="display: flex; justify-content: center; align-items: center; min-height: 30vh;">
+        <div style="min-width: 340px; max-width: 400px; width: 100%;">
+        """,
+        unsafe_allow_html=True
+    )
     st.title("Lead Commander Login")
     with st.form("login_form"):
         username = st.text_input("Username")
@@ -55,6 +62,7 @@ def login_form():
             else:
                 st.session_state["authenticated"] = False
                 st.error("Invalid username or password.")
+    st.markdown("</div></div>", unsafe_allow_html=True)
 
 if not st.session_state.get("authenticated", False):
     login_form()
@@ -87,11 +95,25 @@ if st.session_state.get("authenticated", False):
             text_color = "#f8f9fa"
             header_color = "#00b4d8"
             subheader_color = "#48cae4"
+            table_bg = "#181a1b"
+            table_hover = "#23272b"
+            input_bg = "#23272b"
+            input_border = "#444"
+            button_bg = "#00b4d8"
+            button_text = "#fff"
+            divider_color = "#222"
         else:
             bg_color = "#f8f9fa"
             text_color = "#212529"
             header_color = "#0077b6"
             subheader_color = "#48cae4"
+            table_bg = "#fff"
+            table_hover = "#f1f3f4"
+            input_bg = "#fff"
+            input_border = "#ccc"
+            button_bg = "#0077b6"
+            button_text = "#fff"
+            divider_color = "#e0e0e0"
         css = f"""
         <style>
         html, body, [class*="st-"] {{
@@ -121,6 +143,62 @@ if st.session_state.get("authenticated", False):
             margin-bottom: 1.2rem;
             margin-top: 0.1rem;
             width: 100%;
+        }}
+        /* Table Styling */
+        .stDataFrame, .stTable {{
+            border-radius: 10px !important;
+            overflow: hidden !important;
+            background: {table_bg} !important;
+        }}
+        .stDataFrame tbody tr:hover {{
+            background: {table_hover} !important;
+            transition: background 0.2s;
+        }}
+        .stDataFrame th, .stDataFrame td {{
+            padding: 0.7em 1.2em !important;
+            font-size: 1.05em !important;
+        }}
+        /* Login Form Styling */
+        .stForm {{
+            padding: 2em 2em 1em 2em !important;
+            border-radius: 12px !important;
+            background: {table_bg} !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+            margin-bottom: 2em !important;
+        }}
+        .stTextInput > div > div > input {{
+            background: {input_bg} !important;
+            border: 1.5px solid {input_border} !important;
+            border-radius: 8px !important;
+            padding: 0.7em 1em !important;
+            font-size: 1.1em !important;
+        }}
+        .stButton button {{
+            background: {button_bg} !important;
+            color: {button_text} !important;
+            border-radius: 8px !important;
+            padding: 0.6em 1.5em !important;
+            font-size: 1.1em !important;
+            border: none !important;
+            margin-top: 0.5em !important;
+        }}
+        /* Upload Section Styling */
+        .stFileUploader {{
+            padding: 1.2em 1em 1.2em 1em !important;
+            border-radius: 10px !important;
+            background: {table_bg} !important;
+            margin-bottom: 1.2em !important;
+        }}
+        /* Section Divider */
+        hr, .stMarkdown hr {{
+            border: none;
+            border-top: 2px solid {divider_color};
+            margin: 2em 0 1.5em 0;
+        }}
+        /* General Margin Consistency */
+        .block-container {{
+            padding-top: 2.5rem !important;
+            padding-bottom: 2.5rem !important;
         }}
         </style>
         """
@@ -275,6 +353,7 @@ if menu == "Upload Leads":
 
 elif menu == "View Leads":
     section_header("View Leads")
+    optimize_clicked = False
     if st.session_state["uploaded_leads"] is not None:
         st.info("Viewing uploaded leads")
         df = st.session_state["uploaded_leads"]
@@ -287,11 +366,56 @@ elif menu == "View Leads":
             df = pd.DataFrame(leads)
         else:
             df = pd.DataFrame()
+    # Optimize Pipeline Button
+    if not df.empty:
+        st.markdown(
+            "<div style='display: flex; justify-content: flex-end; margin-bottom: 0.5em;'>"
+            "<button id='optimize-btn' style='background: #00b4d8; color: #fff; border: none; border-radius: 8px; padding: 0.6em 1.5em; font-size: 1.1em; cursor: pointer;'>Optimize Pipeline</button>"
+            "</div>",
+            unsafe_allow_html=True
+        )
+        optimize_clicked = st.button("Optimize Pipeline", key="optimize_pipeline_btn")
+    # Optimization logic
+    if not df.empty and optimize_clicked:
+        with st.spinner("Optimizing leads..."):
+            try:
+                # Send to backend /optimize endpoint
+                leads_json = df.to_dict(orient="records")
+                import requests
+                response = requests.post(
+                    BACKEND_URL + "/optimize",
+                    json=leads_json,
+                    headers={"Content-Type": "application/json"},
+                    timeout=30
+                )
+                if response.status_code == 200:
+                    scored_leads = response.json()
+                    df = pd.DataFrame(scored_leads)
+                    st.session_state["uploaded_leads"] = df
+                    st.success("Leads optimized and scored!")
+                else:
+                    st.error("Optimization failed. Please try again.")
+            except Exception as e:
+                st.error(f"Error optimizing leads: {e}")
     if not df.empty:
         show_filters(df)
         filtered = apply_filters(df)
-        st.markdown(f"**Showing {len(filtered)} out of {len(df)} leads**")
-        styled_dataframe(filtered)
+        # Style Score column if present
+        if "Score" in filtered.columns:
+            def highlight_score(val):
+                color = "#ffe066" if val >= filtered["Score"].max() * 0.7 else "#fff3cd"
+                return f"background-color: {color}; font-weight: 700; color: #333;"
+            styled = filtered.style.applymap(highlight_score, subset=["Score"])
+            st.markdown(f"**Showing {len(filtered)} out of {len(df)} leads**")
+            st.dataframe(
+                styled,
+                use_container_width=True,
+                height=min(600, 40 + 35 * len(filtered)),
+                hide_index=True
+            )
+        else:
+            st.markdown(f"**Showing {len(filtered)} out of {len(df)} leads**")
+            styled_dataframe(filtered)
     st.markdown("---")
 
 elif menu == "Optimize Pipeline":
