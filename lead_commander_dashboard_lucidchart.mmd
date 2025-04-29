@@ -1,0 +1,31 @@
+%% Lead Commander Dashboard – Lucidchart/mermaid Diagram
+%% Modern, modular, dark-mode ready. Emphasizes new metrics and relationship map.
+
+flowchart TD
+    Sidebar[Sidebar Navigation<br/>- Home<br/>- Upload Leads<br/>- View Leads<br/>- Optimize Pipeline<br/>- Automate Actions<br/>- Coaching Tips<br/>- Relationship Map (NEW)]
+    Main[Main Content Area]
+
+    Sidebar -- "Navigation" --> Main
+
+    subgraph Pages
+        Upload[Upload Leads<br/>- Upload CSV<br/>- Clear Uploaded Leads<br/>- Preview Table]
+        View[View Leads<br/>- Leads Table<br/>Columns:<br/>• Lead Name<br/>• Score<br/>• Win Probability<br/>• Risk Score (NEW)<br/>• Projected LTV (NEW)<br/>Sidebar Filters:<br/>• Score Range<br/>• Win Probability Range<br/>• Risk Range (NEW)<br/>• Market Signal Only<br/>• Recommended Actions]
+        Optimize[Optimize Pipeline<br/>- Optimized Leads Table<br/>Columns:<br/>• All from View Leads<br/>• Recommended Next Step]
+        Automate[Automate Actions<br/>- List of Leads with Automation Results]
+        Coaching[Coaching Tips<br/>- Leads with Personalized Coaching Suggestions]
+        Relationship[Relationship Map (NEW)<br/>- Interactive Network Graph<br/>Nodes: Leads<br/>Edges: Relationships<br/>Node Color: Risk Score<br/>Node Size: Projected LTV<br/>Hover: Lead Details]
+    end
+
+    Main --> Upload
+    Main --> View
+    Main --> Optimize
+    Main --> Automate
+    Main --> Coaching
+    Main --> Relationship
+
+    %% Styling/UX notes (not rendered in diagram)
+    %% - Modern, clean modular design with card containers for tables/graphs.
+    %% - Dark mode toggle available.
+    %% - Section headers for each page.
+    %% - Visual hierarchy: important columns (Risk Score, LTV) stand out.
+    %% - Relationship Map: interactive, color/size encoding, tooltips.

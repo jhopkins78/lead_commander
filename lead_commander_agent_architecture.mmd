@@ -1,0 +1,47 @@
+%% Lead Commander Agent Architecture Diagram (Mermaid)
+%% Top-down data flow, rectangles for agents, labeled arrows, grouped subgraphs
+
+flowchart TD
+    %% Input
+    csv[/"Upload CSV"/]
+
+    %% Core Intelligence
+    csv -->|Enriched Lead Data| lia[Lead Intelligence Agent]
+    lia[Lead Intelligence Agent]:::agent
+
+    %% Downstream Agents
+    lia -->|Insights| isa[Insight Summarization Agent]
+    lia -->|Risk Features| lra[Lead Risk Assessment Agent]
+    lia -->|LTV Features| ltv[Lead Lifetime Value (LTV) Agent]
+    lia -->|Market Signals| mss[Market Signal Scanner Agent]
+    lia -->|Forecast Data| rfa[Revenue Forecasting Agent]
+
+    %% Pipeline Optimization
+    isa -->|Summarized Insights| poa[Pipeline Optimization Agent]
+    rfa -->|Forecasts| poa
+    poa[Pipeline Optimization Agent]:::agent
+
+    %% Automation and Coaching (Sales Enablement)
+    subgraph Sales_Enablement_Agents["Sales Enablement Agents"]
+        poa -->|Optimized Pipeline| aa[Automation Agent]
+        lia -->|Context| ca[Coaching Agent]
+        isa -->|Insights| ca
+        rfa -->|Forecasts| ca
+    end
+
+    %% Relationship Mapping (Strategic Mapping)
+    subgraph Strategic_Mapping_Agent["Strategic Mapping Agent"]
+        csv -->|Lead List| rma[Relationship Mapping Agent]
+    end
+
+    %% Styling
+    classDef agent fill:#e3e3ff,stroke:#333,stroke-width:2px;
+    class lia,isa,lra,ltv,mss,rfa,poa,aa,ca,rma agent;
+
+    %% Edge labels for clarity
+    lia -.->|Data for Mapping| rma
+
+    %% Notes:
+    %% - All agents are rectangles.
+    %% - Sales Enablement Agents and Strategic Mapping Agent are visually grouped.
+    %% - Data flows are labeled for clarity.

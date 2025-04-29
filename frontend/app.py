@@ -15,6 +15,20 @@ import streamlit as st
 import requests
 import pandas as pd
 import io
+from pyvis.network import Network
+import streamlit.components.v1 as components
+import tempfile
+import os
+import sys
+
+# Import RelationshipMappingAgent from backend
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'lead_commander_backend', 'app', 'agents')))
+RelationshipMappingAgent = None
+try:
+    from relationship_mapping_agent import RelationshipMappingAgent
+except Exception:
+    # If import fails, RelationshipMappingAgent remains None
+    pass
 
 # Set your backend base URL here (update as needed)
 API_BASE_URL = "https://lead-commander.onrender.com/leads"
@@ -315,7 +329,14 @@ st.title("Lead Commander Dashboard")
 # Sidebar navigation menu (inserted after login and dashboard title)
 menu = st.sidebar.selectbox(
     "Navigation",
-    ["Upload Leads", "View Leads", "Optimize Pipeline", "Automate Actions", "Coaching Tips"]
+    [
+        "Upload Leads",
+        "View Leads",
+        "Optimize Pipeline",
+        "Automate Actions",
+        "Coaching Tips",
+        "Relationship Map"
+    ]
 )
 
 if menu == "Upload Leads":
@@ -338,18 +359,104 @@ if menu == "Upload Leads":
                 st.success(f"Uploaded {len(df)} leads.")
                 st.markdown(f"**Columns detected:** {', '.join(df.columns)}")
                 st.markdown("---")
-                st.markdown("**Preview:**")
-                styled_dataframe(df.head(5))
         except Exception as e:
             st.error(f"Error reading CSV: {e}")
-    elif st.session_state["uploaded_leads"] is not None:
-        df = st.session_state["uploaded_leads"]
-        st.info(f"{len(df)} leads currently loaded from previous upload.")
-        st.markdown(f"**Columns detected:** {', '.join(df.columns)}")
-        st.markdown("---")
-        st.markdown("**Preview:**")
-        styled_dataframe(df.head(5))
-    st.markdown("---")
+
+elif menu == "Relationship Map":
+    section_header("Relationship Map")
+    if RelationshipMappingAgent is None:
+        st.error("RelationshipMappingAgent could not be imported. Please check backend integration.")
+    else:
+        # Step 1: Prepare lead data
+        if st.session_state["uploaded_leads"] is not None:
+            leads_df = st.session_state["uploaded_leads"]
+        else:
+            leads = call_api("/get_leads", method="GET")
+            if leads is not None and isinstance(leads, list) and len(leads) > 0:
+                leads_df = pd.DataFrame(leads)
+            else:
+                leads_df = pd.DataFrame()
+        if leads_df.empty:
+            st.info("No leads available to visualize.")
+        else:
+            # Ensure required columns exist
+            if "id" not in leads_df.columns:
+                leads_df = leads_df.reset_index().rename(columns={"index": "id"})
+            # Fill missing risk_score and projected_ltv with defaults
+            if "risk_score" not in leads_df.columns:
+                leads_df["risk_score"] = 0.0
+            if "projected_ltv" not in leads_df.columns:
+                leads_df["projected_ltv"] = 100.0
+            # Step 2: Generate relationships
+            leads_list = leads_df.to_dict(orient="records")
+            agent = RelationshipMappingAgent()
+            relationships = agent.run(leads_list)
+            lead_data = {str(lead["id"]): lead for lead in leads_list}
+            # Step 3: Build pyvis network
+            net = Network(height="600px", width="100%", bgcolor="#222222", font_color="white", notebook=False, directed=False)
+            for lead_id, data in relationships.items():
+                lead = lead_data.get(str(lead_id)) or lead_data.get(lead_id)
+                if not lead:
+                    continue
+                risk = lead.get("risk_score", 0.0)
+                ltv = lead.get("projected_ltv", 100.0)
+                name = lead.get("name", f"Lead {lead_id}")
+                # Color by risk_score
+                if risk < 0.4:
+                    risk_color = "green"
+                elif risk < 0.7:
+                    risk_color = "yellow"
+                else:
+                    risk_color = "red"
+                # Node size by projected_ltv (min 10, max 60)
+                node_size = max(10, min(60, ltv / 100 * 30 + 20))
+                tooltip = f"{name}<br>Risk: {risk:.2f}<br>LTV: ${ltv:,.2f}"
+                net.add_node(
+                    lead_id,
+                    label=name,
+                    color=risk_color,
+                    size=node_size,
+                    title=tooltip
+                )
+                for connection_id in data.get("connections", []):
+                    net.add_edge(lead_id, connection_id)
+            net.toggle_physics(True)
+            net.set_options("""
+            var options = {
+              "nodes": {
+                "borderWidth": 2,
+                "shadow": true
+              },
+              "edges": {
+                "color": {
+                  "inherit": true
+                },
+                "smooth": false
+              },
+              "interaction": {
+                "hover": true,
+                "navigationButtons": true,
+                "keyboard": true
+              },
+              "physics": {
+                "enabled": true,
+                "barnesHut": {
+                  "gravitationalConstant": -8000,
+                  "centralGravity": 0.3,
+                  "springLength": 95,
+                  "springConstant": 0.04,
+                  "damping": 0.09,
+                  "avoidOverlap": 0.1
+                }
+              }
+            }
+            """)
+            # Step 4: Save and display
+            with tempfile.NamedTemporaryFile("w+", suffix=".html", delete=False) as tmp_file:
+                net.save_graph(tmp_file.name)
+                tmp_file.flush()
+                components.iframe(tmp_file.name, height=600, scrolling=True)
+            st.caption("Pan, zoom, and hover nodes for details. Node color = risk, size = LTV.")
 
 elif menu == "View Leads":
     section_header("View Leads")
