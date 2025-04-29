@@ -4,6 +4,7 @@
 
 # Backend
 flask
+flask-cors 
 gunicorn
 python-dotenv
 
