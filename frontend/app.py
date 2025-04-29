@@ -527,78 +527,178 @@ elif menu == "View Leads":
 
 elif menu == "Optimize Pipeline":
     section_header("Optimize Pipeline")
+    # Use session_state to cache optimized leads
+    if "optimized_leads" not in st.session_state:
+        st.session_state["optimized_leads"] = None
+    leads = None
     if st.session_state["uploaded_leads"] is not None:
         leads = st.session_state["uploaded_leads"].to_dict(orient="records")
-        optimized = call_api("/optimize_pipeline", method="POST", payload=leads)
-        if optimized is not None and isinstance(optimized, list) and len(optimized) > 0:
-            df = pd.DataFrame(optimized)
-        else:
-            df = pd.DataFrame()
     else:
-        leads = call_api("/get_leads", method="GET")
-        if leads is not None and isinstance(leads, list) and len(leads) > 0:
-            optimized = call_api("/optimize_pipeline", method="POST", payload=leads)
+        api_leads = call_api("/get_leads", method="GET")
+        if api_leads is not None and isinstance(api_leads, list) and len(api_leads) > 0:
+            leads = api_leads
+    df = pd.DataFrame()
+    if leads is not None:
+        try:
+            if st.session_state["optimized_leads"] is not None:
+                optimized = st.session_state["optimized_leads"]
+            else:
+                optimized = call_api("/optimize_pipeline", method="POST", payload=leads)
+                if optimized is not None and isinstance(optimized, list) and len(optimized) > 0:
+                    st.session_state["optimized_leads"] = optimized
             if optimized is not None and isinstance(optimized, list) and len(optimized) > 0:
                 df = pd.DataFrame(optimized)
-            else:
-                df = pd.DataFrame()
-        else:
-            df = pd.DataFrame()
+        except Exception as e:
+            st.error(f"Pipeline optimization failed: {e}")
     if not df.empty:
+        # Ensure required columns
+        required_cols = ["Lead Name", "Score", "Win Probability", "Risk Score", "Projected LTV", "Recommended Action"]
+        col_map = {
+            "name": "Lead Name",
+            "score": "Score",
+            "win_probability": "Win Probability",
+            "risk_score": "Risk Score",
+            "projected_ltv": "Projected LTV",
+            "recommended_action": "Recommended Action"
+        }
+        for orig, new in col_map.items():
+            if orig in df.columns and new not in df.columns:
+                df[new] = df[orig]
+        df = df[[c for c in required_cols if c in df.columns]]
         show_filters(df)
         filtered = apply_filters(df)
         st.markdown(f"**Showing {len(filtered)} out of {len(df)} leads**")
-        styled_dataframe(filtered)
+        # Conditional styling: highlight high risk + high LTV
+        def highlight_row(row):
+            risk = row.get("Risk Score", 0)
+            ltv = row.get("Projected LTV", 0)
+            if risk >= 0.7 and ltv >= 100:
+                return ["background-color: #ffb3b3; font-weight: 700"] * len(row)
+            return ["" for _ in row]
+        styled = filtered.style.apply(highlight_row, axis=1)
+        st.dataframe(
+            styled,
+            use_container_width=True,
+            height=min(600, 40 + 35 * len(filtered)),
+            hide_index=True
+        )
+    else:
+        st.info("No optimized pipeline data available.")
     st.markdown("---")
 
 elif menu == "Automate Actions":
     section_header("Automate Actions")
+    # Use session_state to cache automated actions
+    if "automated_actions" not in st.session_state:
+        st.session_state["automated_actions"] = None
+    leads = None
     if st.session_state["uploaded_leads"] is not None:
         leads = st.session_state["uploaded_leads"].to_dict(orient="records")
-        automated = call_api("/automate_actions", method="POST", payload=leads)
-        if automated is not None and isinstance(automated, list) and len(automated) > 0:
-            df = pd.DataFrame(automated)
-        else:
-            df = pd.DataFrame()
     else:
-        leads = call_api("/get_leads", method="GET")
-        if leads is not None and isinstance(leads, list) and len(leads) > 0:
-            automated = call_api("/automate_actions", method="POST", payload=leads)
+        api_leads = call_api("/get_leads", method="GET")
+        if api_leads is not None and isinstance(api_leads, list) and len(api_leads) > 0:
+            leads = api_leads
+    df = pd.DataFrame()
+    if leads is not None:
+        try:
+            if st.session_state["automated_actions"] is not None:
+                automated = st.session_state["automated_actions"]
+            else:
+                automated = call_api("/automate_actions", method="POST", payload=leads)
+                # Use dummy data if backend returns nothing
+                if not (automated and isinstance(automated, list) and len(automated) > 0):
+                    automated = [
+                        {
+                            "Lead Name": lead.get("name", f"Lead {i+1}"),
+                            "Last Action Taken": "Initial Outreach",
+                            "Next Recommended Action": "Follow Up",
+                            "Automation Status": "Pending"
+                        }
+                        for i, lead in enumerate(leads)
+                    ]
+                st.session_state["automated_actions"] = automated
             if automated is not None and isinstance(automated, list) and len(automated) > 0:
                 df = pd.DataFrame(automated)
-            else:
-                df = pd.DataFrame()
-        else:
-            df = pd.DataFrame()
+        except Exception as e:
+            st.error(f"Automation agent failed: {e}")
     if not df.empty:
+        # Ensure required columns
+        required_cols = ["Lead Name", "Last Action Taken", "Next Recommended Action", "Automation Status"]
+        col_map = {
+            "name": "Lead Name",
+            "last_action_taken": "Last Action Taken",
+            "next_recommended_action": "Next Recommended Action",
+            "automation_status": "Automation Status"
+        }
+        for orig, new in col_map.items():
+            if orig in df.columns and new not in df.columns:
+                df[new] = df[orig]
+        df = df[[c for c in required_cols if c in df.columns]]
         show_filters(df)
         filtered = apply_filters(df)
         st.markdown(f"**Showing {len(filtered)} out of {len(df)} leads**")
-        styled_dataframe(filtered)
+        st.dataframe(
+            filtered,
+            use_container_width=True,
+            height=min(600, 40 + 35 * len(filtered)),
+            hide_index=True
+        )
+    else:
+        st.info("No automated actions data available.")
     st.markdown("---")
 
 elif menu == "Coaching Tips":
     section_header("Coaching Tips")
+    # Use session_state to cache coaching tips
+    if "coaching_tips" not in st.session_state:
+        st.session_state["coaching_tips"] = None
+    leads = None
     if st.session_state["uploaded_leads"] is not None:
         leads = st.session_state["uploaded_leads"].to_dict(orient="records")
-        coached = call_api("/generate_coaching", method="POST", payload=leads)
-        if coached is not None and isinstance(coached, list) and len(coached) > 0:
-            df = pd.DataFrame(coached)
-        else:
-            df = pd.DataFrame()
     else:
-        leads = call_api("/get_leads", method="GET")
-        if leads is not None and isinstance(leads, list) and len(leads) > 0:
-            coached = call_api("/generate_coaching", method="POST", payload=leads)
+        api_leads = call_api("/get_leads", method="GET")
+        if api_leads is not None and isinstance(api_leads, list) and len(api_leads) > 0:
+            leads = api_leads
+    df = pd.DataFrame()
+    if leads is not None:
+        try:
+            if st.session_state["coaching_tips"] is not None:
+                coached = st.session_state["coaching_tips"]
+            else:
+                coached = call_api("/generate_coaching", method="POST", payload=leads)
+                if not (coached and isinstance(coached, list) and len(coached) > 0):
+                    coached = [
+                        {
+                            "Lead Name": lead.get("name", f"Lead {i+1}"),
+                            "Coaching Tip Text": "No tip available."
+                        }
+                        for i, lead in enumerate(leads)
+                    ]
+                st.session_state["coaching_tips"] = coached
             if coached is not None and isinstance(coached, list) and len(coached) > 0:
                 df = pd.DataFrame(coached)
-            else:
-                df = pd.DataFrame()
-        else:
-            df = pd.DataFrame()
+        except Exception as e:
+            st.error(f"Coaching agent failed: {e}")
     if not df.empty:
+        # Ensure required columns
+        required_cols = ["Lead Name", "Coaching Tip Text"]
+        col_map = {
+            "name": "Lead Name",
+            "coaching_tip": "Coaching Tip Text"
+        }
+        for orig, new in col_map.items():
+            if orig in df.columns and new not in df.columns:
+                df[new] = df[orig]
+        df = df[[c for c in required_cols if c in df.columns]]
         show_filters(df)
         filtered = apply_filters(df)
         st.markdown(f"**Showing {len(filtered)} out of {len(df)} leads**")
-        styled_dataframe(filtered)
+        st.dataframe(
+            filtered,
+            use_container_width=True,
+            height=min(600, 40 + 35 * len(filtered)),
+            hide_index=True
+        )
+    else:
+        st.info("No coaching tips data available.")
     st.markdown("---")
