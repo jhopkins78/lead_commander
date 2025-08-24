@@ -1,5 +1,0 @@
-cd ~/Documents/Projects/lead_commander
-git status
-git add .
-git commit -m "Final MVP wiring: connected Optimize Pipeline, Automate Actions, Coaching Tips, Relationship Map to backend agents"
-git push origin main
